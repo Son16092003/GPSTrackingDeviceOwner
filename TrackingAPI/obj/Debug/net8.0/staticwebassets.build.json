@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "ZMhbHx3PyXmOEfy80SbHfFpeN4Qw09drQzk4MLE3Tis=",
+  "Source": "TrackingAPI",
+  "BasePath": "_content/TrackingAPI",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

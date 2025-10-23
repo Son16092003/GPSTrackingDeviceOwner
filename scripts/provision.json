@@ -1,0 +1,7 @@
+{
+  "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.plcoding.backgroundlocationtracking/.admin.MyDeviceAdminReceiver",
+  "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION": "https://github.com/Son16092003/TrackingUserCoordinates/releases/download/v1.0.0/app-debug.apk",
+  "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM": "53247d4218aa5bcb66761ff4437b9719b860c8a0d1f4fc510bb9f9ae3973c84c",
+  "android.app.extra.PROVISIONING_SKIP_ENCRYPTION": true,
+  "android.app.extra.PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED": true
+}

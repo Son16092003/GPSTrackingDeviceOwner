@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-policies>
+        <!-- Cho phép app khóa màn hình -->
+        <force-lock />
+        <!-- Cho phép app xóa toàn bộ dữ liệu (factory reset) -->
+        <wipe-data />
+        <!-- Cho phép app reset mật khẩu -->
+        <reset-password />
+        <!-- Cho phép theo dõi tình trạng đăng nhập (sai/đúng mật khẩu) -->
+        <watch-login />
+    </uses-policies>
+</device-admin>
