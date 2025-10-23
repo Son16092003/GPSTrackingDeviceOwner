@@ -19,13 +19,13 @@ android {
         vectorDrawables.useSupportLibrary = true
 
         // ✅ Config API base
-        buildConfigField "String", "BASE_URL", "\"http://10.0.2.2:5089/api/GPS_DeviceTracking\""
+        buildConfigField "String", "BASE_URL", "\"http://192.168.16.147:5089/api/GPS_DeviceTracking\""
         buildConfigField "boolean", "ENABLE_HTTP_LOG", "true"
     }
 
     buildTypes {
         debug {
-            buildConfigField "String", "BASE_URL", "\"http://10.0.2.2:5089/api/GPS_DeviceTracking\""
+            buildConfigField "String", "BASE_URL", "\"http://192.168.16.147:5089/api/GPS_DeviceTracking\""
             buildConfigField "boolean", "ENABLE_HTTP_LOG", "true"
         }
         release {

@@ -1,19 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Cho phép cleartext traffic tới localhost/emulator -->
     <domain-config cleartextTrafficPermitted="true">
+        <!-- Cho phép IP LAN, localhost và tất cả các domain nội bộ -->
+        <domain includeSubdomains="true">192.168.16.147</domain>
+        <domain includeSubdomains="true">localhost</domain>
         <domain includeSubdomains="true">10.0.2.2</domain>
-        <trust-anchors>
-            <certificates src="system"/>
-            <certificates src="user"/>
-        </trust-anchors>
-    </domain-config>
-
-    <!-- Các domain khác nếu cần dùng HTTPS -->
-    <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">your-production-domain.com</domain>
-        <trust-anchors>
-            <certificates src="system"/>
-        </trust-anchors>
     </domain-config>
 </network-security-config>
