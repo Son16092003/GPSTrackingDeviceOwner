@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
+    <!-- ✅ Cho phép truy cập IP LAN, localhost, và máy host (10.0.2.2) -->
     <domain-config cleartextTrafficPermitted="true">
-        <!-- Cho phép IP LAN, localhost và tất cả các domain nội bộ -->
         <domain includeSubdomains="true">192.168.16.147</domain>
         <domain includeSubdomains="true">localhost</domain>
         <domain includeSubdomains="true">10.0.2.2</domain>
     </domain-config>
+
+    <!-- ✅ Cho phép dùng chứng chỉ tự ký (self-signed HTTPS) -->
+    <base-config>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
 </network-security-config>

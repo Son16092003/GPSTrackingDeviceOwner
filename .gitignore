@@ -1,0 +1,20 @@
+@"
+# Ignore thư mục Visual Studio
+.vs/
+bin/
+obj/
+
+# Ignore thư mục build
+build/
+dist/
+publish/
+
+# Ignore file log, cache
+*.log
+*.vsidx
+Logs/
+
+# Ignore cấu hình môi trường
+.env
+
+

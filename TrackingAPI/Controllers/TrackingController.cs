@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using TrackingAPI.Data;
+using TrackingAPI.Hubs;
 using TrackingAPI.Models;
 
 namespace TrackingAPI.Controllers
@@ -9,16 +11,18 @@ namespace TrackingAPI.Controllers
     public class TrackingController : ControllerBase
     {
         private readonly TrackingDbContext _context;
+        private readonly IHubContext<LocationHub> _hubContext; // ✅ Thêm SignalR HubContext
+
+        public TrackingController(TrackingDbContext context, IHubContext<LocationHub> hubContext)
+        {
+            _context = context;
+            _hubContext = hubContext;
+        }
 
         [HttpGet("ping")]
         public IActionResult Ping()
         {
             return Ok("Tracking API is alive!");
-        }
-
-        public TrackingController(TrackingDbContext context)
-        {
-            _context = context;
         }
 
         [HttpPost]
@@ -34,7 +38,10 @@ namespace TrackingAPI.Controllers
             _context.GPS_DeviceTracking.Add(tracking);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Inserted successfully", id = tracking.Oid });
+            // ✅ Gửi realtime đến tất cả client đang kết nối (webadmin)
+            await _hubContext.Clients.All.SendAsync("ReceiveLocationUpdate", tracking);
+
+            return Ok(new { message = "Inserted successfully & broadcasted", id = tracking.Oid });
         }
     }
 }
