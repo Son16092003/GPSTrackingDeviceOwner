@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web Admin - Tracking User</title>
+
+    <!-- Leaflet -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- SignalR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="header-title">
+      <img src="./assets/Eye V2.gif" alt="icon" class="header-icon" />
+      <span>Web Admin - Tracking User</span>
+    </header>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button id="tab-live" class="active">Live Tracking</button>
+      <button id="tab-summary">Summary</button>
+      <button id="btn-guide" class="guide-btn" title="Hướng dẫn">?</button>
+    </div>
+
+    <!-- Map containers -->
+    <div id="map-live" class="map-container" style="display: block"></div>
+    <div id="map-summary" class="map-container" style="display: none"></div>
+
+    <!-- Live Sidebar -->
+    <div id="live-sidebar" class="device-control">
+      <h4>Thiết bị Live</h4>
+      <div id="device-list"></div>
+    </div>
+
+    <!-- Summary Sidebar -->
+    <div id="summary-sidebar" class="device-control" style="display: none">
+      <h4>Summary</h4>
+      <div class="filter-group">
+        <label for="summary-date">Ngày:</label>
+        <input type="date" id="summary-date" />
+      </div>
+      <div class="filter-group">
+        <label for="summary-device">Thiết bị:</label>
+        <select id="summary-device"></select>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button id="btn-summary">Xem Summary</button>
+        <button id="btn-load-detail" title="Load detailed points for current view">
+          Load detail
+        </button>
+      </div>
+    </div>
+
+    <!-- Guide Dialog -->
+    <div id="guide-dialog" class="guide-dialog" style="display: none">
+      <div class="guide-content">
+        <div class="guide-header">
+          <h3>🔍 Hướng dẫn sử dụng</h3>
+          <button id="close-guide" class="close-btn">&times;</button>
+        </div>
+        <div class="guide-body">
+          <div class="guide-section">
+            <h4>📍 Ý nghĩa các icon trên bản đồ:</h4>
+            <div class="icon-guide">
+              <div class="icon-item">
+                <img
+                  src="./assets/Running Person.gif"
+                  alt="Realtime"
+                  class="guide-icon"
+                />
+                <div class="icon-description">
+                  <strong>Realtime (Đang hoạt động)</strong><br />
+                  Thiết bị đang gửi dữ liệu vị trí liên tục
+                </div>
+              </div>
+              <div class="icon-item">
+                <img src="./assets/pause.gif" alt="Pause" class="guide-icon" />
+                <div class="icon-description">
+                  <strong>Pause (Tạm dừng)</strong><br />
+                  Thiết bị tạm ngưng gửi dữ liệu (>1 phút)
+                </div>
+              </div>
+              <div class="icon-item">
+                <img
+                  src="./assets/Close V3.png"
+                  alt="Offline"
+                  class="guide-icon"
+                />
+                <div class="icon-description">
+                  <strong>Offline (Ngoại tuyến)</strong><br />
+                  Thiết bị đã ngưng hoạt động (>3 phút)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="guide-section">
+            <h4>🎮 Cách sử dụng:</h4>
+            <ul class="guide-list">
+              <li>
+                <strong>Live Tracking:</strong> Theo dõi thiết bị thời gian thực
+              </li>
+              <li><strong>Summary:</strong> Xem lịch sử di chuyển theo ngày</li>
+              <li><strong>Sidebar:</strong> Bật/tắt hiển thị từng thiết bị</li>
+              <li>
+                <strong>Auto-fit:</strong> Bản đồ tự động zoom đến thiết bị đang
+                hoạt động
+              </li>
+            </ul>
+          </div>
+
+          <div class="guide-section">
+            <h4>🌈 Vệt màu:</h4>
+            <p>
+              Mỗi thiết bị có màu vệt khác nhau để dễ phân biệt lộ trình di
+              chuyển.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modules -->
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

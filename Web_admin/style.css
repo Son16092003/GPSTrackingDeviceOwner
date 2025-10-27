@@ -1,0 +1,393 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.map-container {
+  width: 100%;
+  height: 100vh;
+  position: relative; /* create stacking context so absolute UI doesn't collapse it */
+  z-index: 0;
+}
+
+.header-title {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #011F82;
+  font-size: 45px;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.header-title .header-icon {
+  margin-top: 1.5%;
+  width: 55px;
+  height: 55px;
+}
+
+/* Bộ lọc */
+.device-control {
+  margin-top: 50px;
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  border-radius: 8px;
+  background: #fff;
+  padding: 16px;
+  max-width: 220px;
+  overflow-y: auto;
+  position: absolute;
+  top: 60px;
+  left: 10px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.device-control h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #011F82;
+  border-bottom: 1px solid #B9D6F3;
+  padding-bottom: 4px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.device-control label {
+  color: #6D92D0;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.device-control input[type="date"],
+.device-control select,
+.device-control button {
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid #B9D6F3;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  margin-top: 15px;
+  width: 100%;
+}
+
+.device-control input[type="date"]:focus,
+.device-control select:focus {
+  border-color: #011F82;
+  box-shadow: 0 0 5px rgba(1,31,130,0.5);
+}
+
+.device-control button {
+  border: none;
+  background-color: #011F82;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  align-items: center;
+}
+
+.device-control button:hover {
+  background-color: #0055cc;
+}
+
+/* Sidebar danh sách thiết bị */
+.device-list-container {
+  position: absolute;
+  top: 150px;
+  right: 10px;
+  background: white;
+  padding: 10px;
+  border: 1px solid #ccc;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.device-list-container h4 {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  color: #011F82;
+  border-bottom: 1px solid #B9D6F3;
+  padding-bottom: 4px;
+}
+
+/* Tabs */
+.tabs {
+  position: absolute;
+  top: 80px;
+  right: 10px;
+  z-index: 1100;
+  display: flex;
+  gap: 5px;
+}
+
+.tabs button {
+  padding: 8px 16px;
+  border: none;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.tabs button:hover {
+  background: #f0f0f0;
+}
+
+.tabs button.active {
+  background: #011F82;
+  color: white;
+}
+
+.guide-btn {
+  background: #28a745 !important;
+  color: white !important;
+  border-radius: 50% !important;
+  width: 35px !important;
+  height: 35px !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-left: 10px !important;
+}
+
+.guide-btn:hover {
+  background: #218838 !important;
+}
+
+/* Dialog hướng dẫn */
+.guide-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guide-content {
+  background: white;
+  border-radius: 12px;
+  padding: 0;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  animation: fadeInScale 0.3s ease-out;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.guide-header {
+  background: #011F82;
+  color: white;
+  padding: 20px;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.guide-header h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.guide-body {
+  padding: 20px;
+}
+
+.guide-section {
+  margin-bottom: 25px;
+}
+
+.guide-section h4 {
+  color: #011F82;
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  border-bottom: 2px solid #B9D6F3;
+  padding-bottom: 5px;
+}
+
+.icon-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.icon-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+
+.guide-icon {
+  width: 35px;
+  height: 35px;
+  flex-shrink: 0;
+}
+
+.icon-description {
+  flex: 1;
+}
+
+.icon-description strong {
+  color: #011F82;
+  font-size: 14px;
+}
+
+.guide-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.guide-list li {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.guide-list strong {
+  color: #011F82;
+}
+
+/* Mobile responsive cho dialog */
+@media (max-width: 768px) {
+  .guide-content {
+    max-width: 95%;
+    margin: 10px;
+  }
+  
+  .icon-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+  
+  .guide-icon {
+    align-self: center;
+  }
+}
+
+/* Summary message styles */
+.summary-message {
+  margin: 10px 0;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.4;
+  border-left: 4px solid;
+  background: #f8f9fa;
+  display: none;
+}
+
+.summary-message.info {
+  border-left-color: #17a2b8;
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.summary-message.success {
+  border-left-color: #28a745;
+  background: #d4edda;
+  color: #155724;
+}
+
+.summary-message.error {
+  border-left-color: #dc3545;
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.summary-message.warning {
+  border-left-color: #ffc107;
+  background: #fff3cd;
+  color: #856404;
+}
+
+/* Spinner inside summary message */
+.summary-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0,0,0,0.1);
+  border-top-color: rgba(0,0,0,0.6);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Tooltip label for devices (permanent) */
+.device-label {
+  background: rgba(255,255,255,0.95) !important;
+  color: #011F82 !important;
+  padding: 2px 8px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+  border: 1px solid rgba(1,31,130,0.08) !important;
+  pointer-events: none !important; /* allow clicks through to marker */
+}
