@@ -3,8 +3,10 @@ package com.plcoding.backgroundlocationtracking.service
 import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
+import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
+import android.os.Bundle
 import android.os.Looper
 import android.util.Log
 import com.google.android.gms.location.*
@@ -26,91 +28,112 @@ class DefaultLocationClient(
     }
 
     private var lastLocation: Location? = null
+    private var fallbackListener: LocationListener? = null
 
     @SuppressLint("MissingPermission")
     override fun getLocationUpdates(interval: Long): Flow<Location> = callbackFlow {
-        Log.d(TAG, "🚀 [START] getLocationUpdates() với interval=${interval}ms")
+        Log.i(TAG, "🚀 [START] getLocationUpdates() interval=${interval}ms")
 
-        // --- 1. Kiểm tra quyền ---
+        // --- 1️⃣ Kiểm tra quyền ---
         val hasFine = context.hasFineLocationPermission()
         val hasCoarse = context.hasCoarseLocationPermission()
         val hasBackground = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
             context.hasBackgroundLocationPermission() else true
 
-        Log.d(TAG, "🔍 Kiểm tra quyền:")
-        Log.d(TAG, "    ➤ ACCESS_FINE_LOCATION: ${if (hasFine) "✅ GRANTED" else "❌ DENIED"}")
-        Log.d(TAG, "    ➤ ACCESS_COARSE_LOCATION: ${if (hasCoarse) "✅ GRANTED" else "❌ DENIED"}")
-        Log.d(TAG, "    ➤ ACCESS_BACKGROUND_LOCATION: ${if (hasBackground) "✅ GRANTED" else "❌ DENIED"}")
+        Log.i(TAG, "🔍 Quyền hiện tại:")
+        Log.i(TAG, "   ➤ Fine: ${if (hasFine) "✅" else "❌"} | Coarse: ${if (hasCoarse) "✅" else "❌"} | Background: ${if (hasBackground) "✅" else "❌"}")
 
         if (!hasFine && !hasCoarse) {
-            throw LocationClient.LocationException("Missing location permission")
+            throw LocationClient.LocationException("❌ Thiếu quyền truy cập vị trí")
         }
 
-        // --- 2. Kiểm tra GPS ---
+        // --- 2️⃣ Kiểm tra GPS ---
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-
-        Log.d(TAG, "📡 Trạng thái GPS: ${if (isGpsEnabled) "✅ Enabled" else "❌ Disabled"}")
+        Log.i(TAG, "📡 GPS: ${if (isGpsEnabled) "✅ Enabled" else "❌ Disabled"}")
 
         if (!isGpsEnabled) {
-            throw LocationClient.LocationException("GPS is disabled")
+            throw LocationClient.LocationException("❌ GPS đang bị tắt")
         }
 
-        // --- 3. Tạo LocationRequest ---
-        val request = LocationRequest.Builder(
-            Priority.PRIORITY_HIGH_ACCURACY,
-            interval
-        ).apply {
-            setMinUpdateIntervalMillis(interval)
-            setWaitForAccurateLocation(true)
-        }.build()
+        // --- 3️⃣ Tạo LocationRequest ---
+        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, interval)
+            .setMinUpdateIntervalMillis(interval)
+            .setWaitForAccurateLocation(true)
+            .build()
+        Log.i(TAG, "🧩 LocationRequest tạo thành công (interval=$interval, priority=HIGH_ACCURACY)")
 
-        Log.d(TAG, "🧩 Đã tạo LocationRequest: interval=${interval}ms, priority=HIGH_ACCURACY")
-
-        // --- 4. Tạo callback ---
+        // --- 4️⃣ Tạo callback ---
         val locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
-                val newLocation = result.lastLocation ?: return
-
-                // Emit luôn, bất kể khoảng cách
-                lastLocation = newLocation
-                launch { send(newLocation) }
-
-                Log.d(TAG, "📍 [Fused] lat=${newLocation.latitude}, lon=${newLocation.longitude}, acc=${newLocation.accuracy}m ✅ EMIT")
+                val loc = result.lastLocation ?: return
+                lastLocation = loc
+                launch { send(loc) }
+                Log.i(TAG, "📍 [Fused] lat=${loc.latitude}, lon=${loc.longitude}, acc=${loc.accuracy}m ✅ EMIT")
             }
 
             override fun onLocationAvailability(availability: LocationAvailability) {
-                Log.d(TAG, "📶 Location availability: ${availability.isLocationAvailable}")
+                Log.w(TAG, "📶 Fused availability = ${availability.isLocationAvailable}")
                 if (!availability.isLocationAvailable) {
-                    Log.w(TAG, "⚠️ Fused không khả dụng, re-register location updates...")
-                    tryReRegister()
-                }
-            }
-
-            private fun tryReRegister() {
-                try {
-                    client.removeLocationUpdates(this)
-                    client.requestLocationUpdates(request, this, Looper.getMainLooper())
-                    Log.d(TAG, "🔄 Re-registered FusedLocationProviderClient")
-                } catch (e: Exception) {
-                    Log.e(TAG, "❌ Lỗi re-register Fused: ${e.message}")
+                    Log.w(TAG, "⚠️ Fused không khả dụng, kích hoạt fallback → LocationManager")
+                    startFallback(locationManager, interval, this@callbackFlow)
                 }
             }
         }
 
-        // --- 5. Đăng ký callback lần đầu ---
+        // --- 5️⃣ Đăng ký cập nhật ---
         try {
             client.requestLocationUpdates(request, locationCallback, Looper.getMainLooper())
-            Log.d(TAG, "✅ Đã đăng ký cập nhật vị trí thành công.")
+            Log.i(TAG, "✅ FusedLocationProviderClient đăng ký thành công.")
         } catch (e: Exception) {
-            throw LocationClient.LocationException("Failed to request location updates: ${e.message}")
+            Log.e(TAG, "❌ FusedLocationProvider lỗi: ${e.message}")
+            Log.w(TAG, "⏪ Chuyển sang fallback LocationManager...")
+            startFallback(locationManager, interval, this)
         }
 
-        // --- 6. Dọn dẹp khi Flow bị cancel ---
+        // --- 6️⃣ Dọn dẹp ---
         awaitClose {
-            Log.d(TAG, "🧹 [CLOSE] Dừng cập nhật vị trí...")
-            client.removeLocationUpdates(locationCallback)
-            Log.d(TAG, "🧽 [DONE] Callback Fused đã gỡ")
+            Log.i(TAG, "🧹 Hủy cập nhật vị trí...")
+            try {
+                client.removeLocationUpdates(locationCallback)
+                fallbackListener?.let { locationManager.removeUpdates(it) }
+                Log.i(TAG, "🧽 Dừng tất cả location callbacks.")
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Lỗi khi cleanup: ${e.message}")
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun startFallback(
+        locationManager: LocationManager,
+        interval: Long,
+        scope: kotlinx.coroutines.channels.ProducerScope<Location>
+    ) {
+        try {
+            val listener = object : LocationListener {
+                override fun onLocationChanged(location: Location) {
+                    lastLocation = location
+                    scope.launch { scope.send(location) }
+                    Log.i(TAG, "📍 [Fallback] lat=${location.latitude}, lon=${location.longitude}, acc=${location.accuracy}m ✅ EMIT")
+                }
+
+                override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+                    Log.d(TAG, "ℹ️ Fallback provider status: $provider ($status)")
+                }
+            }
+
+            fallbackListener = listener
+            locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                interval,
+                0f,
+                listener,
+                Looper.getMainLooper()
+            )
+            Log.i(TAG, "✅ Fallback LocationManager kích hoạt thành công.")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Fallback LocationManager lỗi: ${e.message}")
         }
     }
 }

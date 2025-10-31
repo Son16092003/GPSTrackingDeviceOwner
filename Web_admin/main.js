@@ -8,9 +8,9 @@ import { startSignalR } from "./signalrClient.js";
 // NOTE: '0.0.0.0' is a server listen address and is NOT routable from the browser.
 // If you run the server locally, use 'http://localhost:5089/hubs/location' or
 // 'http://127.0.0.1:5089/hubs/location' or the machine's LAN IP.
-const HUB_URL = "http://192.168.0.114:5089/hubs/location"; // đổi thành URL thật của bạn
+const HUB_URL = "https://compete-cam-collective-children.trycloudflare.com/hubs/location"; // đổi thành URL thật của bạn
 
-let mapLive = null;
+let mapLive = null; 
 let mapSummary = null;
 
 // Auto-fit configuration and debounce timer

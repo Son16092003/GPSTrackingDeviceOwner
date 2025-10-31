@@ -19,13 +19,13 @@ android {
         vectorDrawables.useSupportLibrary = true
 
         // ✅ Config API base
-        buildConfigField "String", "BASE_URL", "\" https://clusters-bulletin-interests-dark.trycloudflare.com/api/GPS_DeviceTracking\""
+        buildConfigField "String", "BASE_URL", "\" https://compete-cam-collective-children.trycloudflare.com/api/GPS_DeviceTracking\""
         buildConfigField "boolean", "ENABLE_HTTP_LOG", "true"
     }
 
     buildTypes {
         debug {
-            buildConfigField "String", "BASE_URL", "\" https://clusters-bulletin-interests-dark.trycloudflare.com/api/GPS_DeviceTracking\""
+            buildConfigField "String", "BASE_URL", "\" https://compete-cam-collective-children.trycloudflare.com/api/GPS_DeviceTracking\""
             buildConfigField "boolean", "ENABLE_HTTP_LOG", "true"
         }
         release {

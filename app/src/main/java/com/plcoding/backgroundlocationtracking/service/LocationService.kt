@@ -1,7 +1,6 @@
 package com.plcoding.backgroundlocationtracking.service
 
-import android.app.Notification
-import android.app.Service
+import android.app.*
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -9,7 +8,7 @@ import android.location.Location
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkRequest
-import android.os.IBinder
+import android.os.*
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.android.gms.location.LocationServices
@@ -27,7 +26,8 @@ import kotlinx.coroutines.flow.retryWhen
 class LocationService : Service() {
 
     private val TAG = "LocationService"
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    // Dùng Dispatchers.IO vì có nhiều tác vụ mạng và I/O
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var locationClient: DefaultLocationClient
     private lateinit var prefs: SharedPreferences
     private lateinit var connectivityManager: ConnectivityManager
@@ -51,6 +51,7 @@ class LocationService : Service() {
         prefs = getSharedPreferences("setup_prefs", Context.MODE_PRIVATE)
         loadIdentity()
 
+        // Theo dõi thay đổi cấu hình động
         prefs.registerOnSharedPreferenceChangeListener { _, key ->
             if (key == "title" || key == "user_name" || key == "device_id") {
                 Log.i(TAG, "🔄 SharedPrefs changed — reload identity & restart tracking")
@@ -64,7 +65,7 @@ class LocationService : Service() {
             LocationServices.getFusedLocationProviderClient(applicationContext)
         )
 
-        // Start foreground service với kênh notify ẩn hoàn toàn
+        // Start foreground service với notification ẩn
         startForeground(NOTIFICATION_ID, createSilentNotification())
 
         // Khởi tạo ConnectivityManager và đăng ký network callback
@@ -120,7 +121,7 @@ class LocationService : Service() {
                 Log.e(TAG, "❌ Lỗi luồng lấy vị trí", e)
             }
             .onEach { location ->
-                Log.d(TAG, "🛠️ Location flow emit: lat=${location.latitude}, lon=${location.longitude}, acc=${location.accuracy}m")
+                Log.d(TAG, "🛠️ Location emit: lat=${location.latitude}, lon=${location.longitude}, acc=${location.accuracy}m")
                 sendLocation(location)
             }
             .launchIn(serviceScope)
@@ -155,14 +156,14 @@ class LocationService : Service() {
                 )
                 if (success) Log.i(TAG, "✅ Sent successfully: $trackingData")
                 else {
-                    Log.w(TAG, "⚠️ Failed to send after retries, saving offline (pending)")
+                    Log.w(TAG, "⚠️ Failed to send after retries, saving offline")
                     OfflineTrackingManager.saveOffline(applicationContext, trackingData)
                 }
 
                 val pendingCountAfter = OfflineTrackingManager.getPendingCount(applicationContext)
                 Log.i(TAG, "📊 Pending offline count after send: $pendingCountAfter")
             } catch (e: Exception) {
-                Log.e(TAG, "❌ Exception while sending, saving offline (pending): $trackingData", e)
+                Log.e(TAG, "❌ Exception while sending, saving offline: $trackingData", e)
                 OfflineTrackingManager.saveOffline(applicationContext, trackingData)
             }
         }
@@ -179,7 +180,7 @@ class LocationService : Service() {
     }
 
     // ========================== NETWORK CALLBACK ==========================
-    private fun registerNetworkCallback() {
+        private fun registerNetworkCallback() {
         networkCallback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 super.onAvailable(network)
@@ -197,6 +198,27 @@ class LocationService : Service() {
 
         val request = NetworkRequest.Builder().build()
         connectivityManager.registerNetworkCallback(request, networkCallback)
+    }
+
+    // ========================== SERVICE AUTO-RESTART ==========================
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        Log.w(TAG, "♻️ Service bị remove — thiết lập khởi động lại.")
+
+        val restartServiceIntent = Intent(applicationContext, LocationService::class.java).apply {
+            setPackage(packageName)
+        }
+        val restartServicePendingIntent = PendingIntent.getService(
+            this, 1, restartServiceIntent,
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val alarmService = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        alarmService.set(
+            AlarmManager.ELAPSED_REALTIME,
+            SystemClock.elapsedRealtime() + 1000,
+            restartServicePendingIntent
+        )
     }
 
     override fun onDestroy() {
